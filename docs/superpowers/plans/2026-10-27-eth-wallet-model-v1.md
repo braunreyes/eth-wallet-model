@@ -355,7 +355,7 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.2
       - run: uv sync --locked
       - run: make lint-py lint-sql
-      - uses: DavidAnson/markdownlint-cli2-action@v25
+      - uses: DavidAnson/markdownlint-cli2-action@v25.0.0
         with:
           globs: "**/*.md"
 
