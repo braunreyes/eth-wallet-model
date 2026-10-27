@@ -329,7 +329,7 @@ lint: lint-py lint-sql lint-md ## All linters
 test-py: ## pytest with coverage gate
 	uv run pytest
 
-check: lint test-py ci-build ## The gate: run before every commit
+check: lint ci-build ## The gate: run before every commit
 
 clean: ## Remove build artifacts (keeps data/raw)
 	rm -rf target dbt_packages logs data/*.duckdb
@@ -351,11 +351,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
       - run: uv sync --locked
-      - run: make lint-py lint-sql test-py
-      - uses: DavidAnson/markdownlint-cli2-action@v20
+      - run: make lint-py lint-sql
+      - uses: DavidAnson/markdownlint-cli2-action@v25.0.0
         with:
           globs: "**/*.md"
 
@@ -364,8 +364,8 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
       - run: uv sync --locked
       - run: make ci-build
 ```
@@ -414,6 +414,8 @@ Append these bullets under `## Gotchas`:
 - BigQuery `BIGNUMERIC` holds about 38.7 integer digits (~2^128), not a full uint256.
 ```
 
+Also add `dbt_packages/**`, `target/**`, and `logs/**` to `ignores` in `.markdownlint-cli2.jsonc`, so vendored package docs aren't linted.
+
 - [ ] **Step 10: Create empty dirs, install, and run the gate**
 
 ```bash
@@ -425,12 +427,13 @@ make lint-sql lint-md
 uv run dbt parse
 ```
 
-Expected: `uv lock` resolves, `dbt parse` prints no errors. `make test-py` cannot pass yet (no `extract` module), and that is fine until Task 3.
+Expected: `uv lock` resolves, `dbt parse` prints no errors, and `make check` passes. `test-py` stays out of `check` and CI until Task 3 adds the first tests.
 
 - [ ] **Step 11: Commit**
 
 ```bash
-git add pyproject.toml uv.lock Makefile profiles.yml dbt_project.yml packages.yml \
+git add pyproject.toml uv.lock Makefile profiles.yml dbt_project.yml packages.yml package-lock.yml \
+  .markdownlint-cli2.jsonc \
   .sqlfluff .sqlfluffignore .gitignore README.md AGENTS.md .github/workflows/ci.yml \
   models seeds snapshots macros tests scripts/__init__.py scripts/tests/__init__.py
 git commit -m "chore: scaffold dbt project and gate"
@@ -894,7 +897,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest`
-Expected: all pass, coverage ≥ 80%. Then `make lint-py` passes. If mypy flags pendulum's `.date()` return types, narrow with `assert isinstance(...)`; don't add `# type: ignore`.
+Expected: all pass, coverage ≥ 80%. Now add `test-py` back to the gate: `check: lint test-py ci-build` in the Makefile, and `make lint-py lint-sql test-py` in the CI `check` job. Then `make lint-py` passes. If mypy flags pendulum's `.date()` return types, narrow with `assert isinstance(...)`; don't add `# type: ignore`.
 
 - [ ] **Step 5: Write `models/staging/_eth__sources.yml`**
 
@@ -935,7 +938,8 @@ Run: `make extract` (7 days; takes a few minutes). Expected: one log line per da
 - [ ] **Step 8: Commit**
 
 ```bash
-git add scripts/extract.py scripts/tests/test_extract.py models/staging/_eth__sources.yml tests/fixtures/raw
+git add scripts/extract.py scripts/tests/test_extract.py models/staging/_eth__sources.yml tests/fixtures/raw \
+  Makefile .github/workflows/ci.yml
 git commit -m "feat(extract): copy token-filtered parquet from s3"
 ```
 
@@ -1677,15 +1681,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
       - run: uv sync --locked
       - run: make ci-build
       - run: |
           ETH_RAW_ROOT=tests/fixtures/raw ETH_DUCKDB_PATH=data/ci.duckdb \
             DBT_PROFILES_DIR=. uv run dbt docs generate --static
           mkdir -p site && cp target/static_index.html site/index.html
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -1697,7 +1701,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 ```
 
 - [ ] **Step 2: Add `make docs`** — `$(DBT) docs generate --static && open target/static_index.html`.

@@ -59,3 +59,6 @@ The learner has no CS degree and has ADHD: explain jargon in plain words with a 
 - DuckDB arrays start at 1, so topic0 is `topics[1]`.
 - The source bucket is in `us-east-2`. Set `s3_region` or reads fail.
 - Reorgs can rewrite recent blocks. That's why the incremental model has a lookback.
+- `token_transfers.from_address` / `to_address` are 32-byte padded topics (66 chars). Keep the last 40 hex chars.
+- Run `uv run dbt`, never bare `dbt`: the global `dbt` here is dbt-fusion.
+- BigQuery `BIGNUMERIC` holds about 38.7 integer digits (~2^128), not a full uint256.

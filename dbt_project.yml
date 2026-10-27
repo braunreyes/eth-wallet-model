@@ -1,0 +1,33 @@
+name: eth_wallet_model
+version: "1.0.0"
+profile: eth_wallet_model
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  lookback_days: 2
+  extract_end: "{{ env_var('ETH_EXTRACT_END', '2026-10-25') }}"
+  freshness_max_days: 1
+  # Upper bound on block_date; the incremental audit steps it day by day.
+  process_until: "9999-12-31"
+  # Label state as of this date; replay_labels.sh steps it through each version.
+  labels_as_of: "9999-12-31"
+  incremental_audit: false
+
+models:
+  eth_wallet_model:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    core:
+      +materialized: table
+      +contract:
+        enforced: true
+    marts:
+      +materialized: table
