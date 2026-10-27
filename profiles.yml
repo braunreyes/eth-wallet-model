@@ -1,0 +1,16 @@
+# No credentials here. BigQuery uses gcloud application-default credentials.
+eth_wallet_model:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "{{ env_var('ETH_DUCKDB_PATH', 'data/eth.duckdb') }}"
+      threads: 4
+    bigquery:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('ETH_BQ_PROJECT', 'set-ETH_BQ_PROJECT') }}"
+      dataset: "{{ env_var('ETH_BQ_DATASET', 'eth_wallet_model') }}"
+      location: US
+      threads: 4
+      job_execution_timeout_seconds: 600

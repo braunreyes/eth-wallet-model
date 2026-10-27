@@ -12,6 +12,9 @@
     "**/.venv/**",
     "**/venv/**",
     "**/.git/**",
-    "**/.superpowers/**"
+    "**/.superpowers/**",
+    "dbt_packages/**",
+    "target/**",
+    "logs/**"
   ]
 }
